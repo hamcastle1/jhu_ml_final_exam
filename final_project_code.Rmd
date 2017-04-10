@@ -1,0 +1,63 @@
+---
+title: "final_project"
+author: "Dylan Rose"
+date: "September 24, 2015"
+output: html_document
+---
+
+```{r,echo=FALSE,message=FALSE}
+setwd("~/Dropbox/extra_courses/jhu_practical_machine_learning")
+rm(list=ls())
+training_data<-read.csv("/Users/dylanrose/Dropbox/extra_courses/jhu_practical_machine_learning/final_project/pml-training.csv",na.strings=c("#DIV/0!","NA"))
+testing_data<-read.csv("/Users/dylanrose/Dropbox/extra_courses/jhu_practical_machine_learning/final_project/pml-testing.csv",na.strings=c("#DIV/0!","NA"))
+
+```
+
+Assume we've got the training and test data loaded into data frames called "training_data" and "testing_data" already. All "NA"s, "#DIV/0!" and "" records have been labeled as missing values. I've also loaded some key libraries (caret, dplyr,ggplot). 
+```{r,echo=FALSE,message=FALSE}
+library(caret)
+library(ggplot2)
+library(dplyr)
+library(plyr)
+library(e1071)
+```
+
+Most of these rows have significant amounts of missing data, so we can probably afford to dump them. 
+```{r}
+#Drop any columns containing missing values
+training_data <- training_data[,colSums(is.na(training_data)) == 0]
+testing_data <- testing_data[,colSums(is.na(testing_data))==0]
+
+#Also some dump some probably extraneous factor variables
+training_data <- select(training_data,-(X:num_window))
+testing_data <- select(testing_data,-(X:num_window))
+```
+
+Next up is a 10-fold cross-validated SVM with a radial kernel for the classification. Because the classes are not the same size, each class will be fitted with a weight proportional to its percentage of the total data.
+
+We'll also run this model on a training sub-set and test it on the validation set as a final sanity check.
+
+```{r}
+partition<-createDataPartition(y=training_data$classe,p=0.7,list=FALSE)
+training_sub<-training_data[partition,]
+validation_sub<-training_data[-partition,]
+wts<-table(training_sub$classe)/100
+svm_model<-svm(classe~.,data=training_sub,cross=10,class.weights=wts)
+svm_model_predictions<-predict(svm_model,validation_sub)
+confusionMatrix(svm_model_predictions,validation_sub$classe)
+```
+
+This classifier is ~99% accurate, so we'll stop here and use it to generate the files for uploading to the submission portion of the assignment:
+
+```{r}
+answers<-predict(svm_model,testing_data)
+
+pml_write_files = function(x){
+  n = length(x)
+  for(i in 1:n){
+    filename = paste0("problem_id_",i,".txt")
+    write.table(x[i],file=filename,quote=FALSE,row.names=FALSE,col.names=FALSE)
+  }
+}
+pml_write_files(answers)
+```
