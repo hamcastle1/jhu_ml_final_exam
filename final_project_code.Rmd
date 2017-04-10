@@ -8,8 +8,8 @@ output: html_document
 ```{r,echo=FALSE,message=FALSE}
 setwd("~/Dropbox/extra_courses/jhu_practical_machine_learning")
 rm(list=ls())
-training_data<-read.csv("/Users/dylanrose/Dropbox/extra_courses/jhu_practical_machine_learning/final_project/pml-training.csv",na.strings=c("#DIV/0!","NA"))
-testing_data<-read.csv("/Users/dylanrose/Dropbox/extra_courses/jhu_practical_machine_learning/final_project/pml-testing.csv",na.strings=c("#DIV/0!","NA"))
+training_data<-read.csv("./pml-training.csv",na.strings=c("#DIV/0!","NA"))
+testing_data<-read.csv("./pml-testing.csv",na.strings=c("#DIV/0!","NA"))
 
 ```
 
